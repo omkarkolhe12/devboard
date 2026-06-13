@@ -1,0 +1,45 @@
+# DevBoard (advanced) — UI + Go backend + Postgres. That's the whole stack.
+#
+#   browser ──▶ frontend (nginx :8080→80) ──/api──▶ backend (Go :8080) ──▶ postgres
+#
+# Bring it up:  docker compose up --build
+# Then open:    http://localhost:8080
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: devboard
+      POSTGRES_PASSWORD: devboard
+      POSTGRES_DB: devboard
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devboard -d devboard"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: "8080"
+      POSTGRES_URL: "postgres://devboard:devboard@postgres:5432/devboard?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"   # exposed for direct curl/debugging; the UI uses the gateway
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
