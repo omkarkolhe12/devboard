@@ -1,4 +1,4 @@
-# Goal - Ensure the docker files and Docker images are security Tested
+# Goal - Ensure the docker files and Docker images are security Tested 
 
 name: Docker Scan
 
